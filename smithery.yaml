@@ -1,0 +1,22 @@
+# Smithery (https://smithery.ai) manifest for the Nahook MCP server.
+#
+# The MCP server is distributed as a subcommand of the `nahook` CLI binary,
+# which users install via Homebrew, install.sh, or `go install`. Smithery
+# can't fetch the binary directly — installation is documented in the
+# README. This manifest describes how to invoke the server once it's on
+# the user's PATH.
+#
+# Refine this file when actually submitting to Smithery; the schema may
+# have evolved since this draft.
+
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties: {}
+    additionalProperties: false
+  commandFunction: |-
+    () => ({
+      command: "nahook",
+      args: ["mcp", "serve"]
+    })
