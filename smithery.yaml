@@ -1,22 +1,70 @@
 # Smithery (https://smithery.ai) manifest for the Nahook MCP server.
 #
-# The MCP server is distributed as a subcommand of the `nahook` CLI binary,
-# which users install via Homebrew, install.sh, or `go install`. Smithery
-# can't fetch the binary directly — installation is documented in the
-# README. This manifest describes how to invoke the server once it's on
-# the user's PATH.
+# The MCP server is distributed as a subcommand of the `nahook` CLI
+# binary — users install the binary via Homebrew, install.sh, `go install`,
+# or by downloading from GitHub Releases (see README.md). Smithery does
+# not fetch the binary itself; it just invokes `nahook mcp serve` once
+# the user has the binary on their PATH.
 #
-# Refine this file when actually submitting to Smithery; the schema may
-# have evolved since this draft.
+# Submission to Smithery is gated on Nahook GA. Until then this file
+# exists for discoverability and to make the eventual submission
+# mechanical.
 
+name: nahook-mcp
+displayName: Nahook MCP
+description: >-
+  The official Model Context Protocol server for Nahook — trigger
+  webhooks, inspect deliveries, retry failures, and manage endpoints
+  from Claude Desktop, Cursor, Cline, Zed, and other MCP-compatible
+  AI assistants.
+homepage: https://docs.nahook.com/mcp
+repository: https://github.com/getnahook/nahook-mcp
+license: MIT
+category: developer-tools
+keywords:
+  - webhooks
+  - nahook
+  - api
+  - delivery
+  - developer-tools
+  - claude
+  - cursor
+
+# Tool surface Smithery displays on the listing card. Mirrors the table
+# in README.md — keep in sync when adding/removing tools in
+# getnahook/nahook-cli (internal/commands/mcp/).
+tools:
+  - name: whoami
+    description: Local config sanity check — workspace, region, token id, expiry.
+  - name: list_endpoints
+    description: List every endpoint in the current workspace.
+  - name: get_endpoint
+    description: Fetch one endpoint by its public id (ep_xxx).
+  - name: create_endpoint
+    description: Create a new endpoint. Defaults to the workspace's default environment.
+  - name: update_endpoint
+    description: Partial patch — pause/resume, change URL, update description.
+  - name: list_environments
+    description: List every environment in the workspace.
+  - name: list_deliveries
+    description: Page through an endpoint's deliveries, newest first.
+  - name: get_delivery
+    description: Fetch one delivery by its public id (del_xxx). Optionally include the original payload.
+  - name: list_attempts
+    description: List every attempt against a delivery (useful for debugging failures).
+  - name: retry_delivery
+    description: Re-enqueue a failed or dead-lettered delivery.
+  - name: trigger_event
+    description: Fire an event by type — the backend fans it out to every subscriber.
+  - name: send_to_endpoint
+    description: Send a webhook directly to one endpoint.
+
+# Invocation. The user has `nahook` on their PATH (installed via
+# Homebrew, install.sh, etc.). Smithery runs `nahook mcp serve` and
+# communicates over stdio.
 startCommand:
   type: stdio
-  configSchema:
-    type: object
-    properties: {}
-    additionalProperties: false
-  commandFunction: |-
-    () => ({
-      command: "nahook",
-      args: ["mcp", "serve"]
-    })
+  command: nahook
+  args:
+    - mcp
+    - serve
