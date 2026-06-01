@@ -1,10 +1,10 @@
 # Smithery (https://smithery.ai) manifest for the Nahook MCP server.
 #
 # The MCP server is distributed as a subcommand of the `nahook` CLI
-# binary — users install the binary via Homebrew, install.sh, `go install`,
-# or by downloading from GitHub Releases (see README.md). Smithery does
-# not fetch the binary itself; it just invokes `nahook mcp serve` once
-# the user has the binary on their PATH.
+# binary — users install the binary via Homebrew, install.sh,
+# `go install`, or by downloading from GitHub Releases (see README.md).
+# Smithery does not fetch the binary itself; it just invokes
+# `nahook mcp serve` once the user has `nahook` on their PATH.
 #
 # Submission to Smithery is gated on Nahook GA. Until then this file
 # exists for discoverability and to make the eventual submission
@@ -59,12 +59,42 @@ tools:
   - name: send_to_endpoint
     description: Send a webhook directly to one endpoint.
 
-# Invocation. The user has `nahook` on their PATH (installed via
-# Homebrew, install.sh, etc.). Smithery runs `nahook mcp serve` and
-# communicates over stdio.
+# Invocation + config.
+#
+# The configSchema + commandFunction shape (as opposed to a flat
+# command/args) is what lets Smithery prompt the user for optional
+# config at install time. We only ask for one thing — the Nahook
+# ingestion key — which is OPTIONAL because read tools work without it.
+#
+# The CLI login token lives in ~/.nahook/config.toml and is set out-of-
+# band by running `nahook login` from a terminal. Users do that before
+# installing the MCP via Smithery; the manifest doesn't need to prompt
+# for it.
 startCommand:
   type: stdio
-  command: nahook
-  args:
-    - mcp
-    - serve
+  configSchema:
+    type: object
+    properties:
+      nahookIngestionKey:
+        type: string
+        title: Nahook ingestion key (optional)
+        description: >-
+          Nahook ingestion key (nhk_...) used by the trigger_event and
+          send_to_endpoint tools. Read tools (list_endpoints,
+          get_delivery, etc.) work without it. Same key your Nahook
+          SDKs use — copy it from your dashboard. Leave blank if you
+          only need read access.
+    additionalProperties: false
+  commandFunction: |-
+    (config) => {
+      const env = {};
+      if (config && config.nahookIngestionKey) {
+        env.NAHOOK_INGESTION_KEY = config.nahookIngestionKey;
+      }
+      return {
+        command: 'nahook',
+        args: ['mcp', 'serve'],
+        env,
+      };
+    }
+  exampleConfig: {}
