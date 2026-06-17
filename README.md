@@ -4,6 +4,8 @@ The official **Model Context Protocol** server for [Nahook](https://nahook.com) 
 
 > The MCP server ships as a subcommand of the [`nahook` CLI](https://github.com/getnahook/nahook-cli). One binary, one credentials file, one install path.
 
+[![Glama](https://glama.ai/mcp/servers/getnahook/nahook-mcp/badge)](https://glama.ai/mcp/servers/getnahook/nahook-mcp)
+
 ## What it does
 
 Once installed and authenticated, your AI assistant can:
