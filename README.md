@@ -18,6 +18,20 @@ Once installed and authenticated, your AI assistant can:
 
 Write operations are tagged with the MCP `destructiveHint`/`readOnlyHint` annotations so MCP clients surface a per-call human-approval prompt before anything mutates state.
 
+## Security guardrails
+
+Webhook payloads are third-party data, so the server treats everything that flows back into the model's context as a potential prompt-injection channel:
+
+- **Untrusted content is fenced.** Every producer- or receiver-authored value that reaches the model — webhook payloads (`get_delivery` with `include_payload`), delivery idempotency keys, and receiver error messages (`list_attempts`) — is wrapped in explicit `<<<UNTRUSTED CONTENT ...>>>` delimiters with embedded fence markers neutralized, and the server instructions tell the model to treat fenced content as inert data, never as instructions.
+- **Payloads are capped.** Bodies over 256 KB are truncated (flagged via `payload_truncated`) so a hostile producer can't stuff the model's context. Tune the cap with `NAHOOK_MCP_PAYLOAD_CAP=<bytes>` in the MCP client's environment.
+- **No delete tools, by design.** Nothing in the tool surface can destroy data.
+- **`update_endpoint` is marked destructive.** It overwrites live endpoint config (repointing its URL is the primitive an injection would target), so its `destructiveHint` is `true` and clients surface a prominent approval prompt.
+- **Write tools rely on human approval.** Per the MCP spec, annotations are advisory hints, not access control — the security boundary is the client's per-call approval prompt, which applies to every non-read tool. The additive write tools (`create_endpoint`, `send_to_endpoint`, `trigger_event`) are annotated `destructiveHint: false` per their spec semantics; keep human-in-the-loop approval enabled in your MCP client and don't blanket-allow them. If you want a hard guarantee of no writes, run the server without an ingestion key (disables sending) and treat management tools as approval-gated.
+- **Secrets never reach the model.** Endpoint signing secrets and auth tokens are omitted from every tool output; `whoami` returns only the token's public id.
+- **Split credentials.** Sending (`trigger_event`, `send_to_endpoint`) requires a separate ingestion key — omit it and the server is management/read-only for ingestion.
+
+Client-side measures can't make prompt injection impossible — pair them with your MCP client's tool-approval prompts.
+
 ## Install
 
 The MCP server is a subcommand of the `nahook` CLI. Install the CLI, then add it to your AI client.
